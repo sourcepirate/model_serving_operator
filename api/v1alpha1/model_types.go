@@ -34,6 +34,7 @@ type ModelSpec struct {
 	Accesskey string `json:"access_key"`
 	SecretKey string `json:"secret_key"`
 	Endpoint  string `json:"endpoint"`
+	Columns   string `json:"columns"`
 }
 
 // ModelStatus defines the observed state of Model

@@ -37,6 +37,8 @@ spec:
             properties:
               access_key:
                 type: string
+              columns:
+                type: string
               endpoint:
                 type: string
               location:
@@ -50,6 +52,7 @@ spec:
                 type: string
             required:
             - access_key
+            - columns
             - endpoint
             - location
             - replicas

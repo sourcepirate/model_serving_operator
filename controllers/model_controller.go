@@ -18,20 +18,82 @@ package controllers
 
 import (
 	"context"
+	"fmt"
 
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	mlv1alpha1 "github.com/kalkyai/model-serving-operator/api/v1alpha1"
+	model "github.com/kalkyai/model-serving-operator/pkg/model"
 	appsv1 "k8s.io/api/apps/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 )
 
 // ModelReconciler reconciles a Model object
 type ModelReconciler struct {
 	client.Client
 	Scheme *runtime.Scheme
+}
+
+// called when trying to create new resource.
+func (r *ModelReconciler) reconcileCreate(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
+
+	ctrllog := log.FromContext(ctx).WithValues("models", req.NamespacedName)
+
+	model_serving := &mlv1alpha1.Model{}
+	err := r.Get(ctx, req.NamespacedName, model_serving)
+
+	mod := &model.ModelServing{
+		Name:      model_serving.Name,
+		Replicas:  model_serving.Spec.Replicas,
+		ModelURL:  model_serving.Spec.Location,
+		Columns:   model_serving.Spec.Columns,
+		Namespace: model_serving.Namespace,
+	}
+
+	config := mod.CreateConfigMap(ctx, model_serving.Spec.Location, model_serving.Spec.Columns)
+	deployment := mod.CreateDeployment(ctx)
+	service := mod.CreateService(ctx)
+
+	ctrl.SetControllerReference(model_serving, deployment, r.Scheme)
+	ctrl.SetControllerReference(model_serving, service, r.Scheme)
+	ctrl.SetControllerReference(model_serving, config, r.Scheme)
+
+	ctrllog.Info("Creating ConfigMap")
+	err = r.Create(ctx, config)
+
+	if err != nil {
+		if apierrors.IsBadRequest(err) {
+			ctrllog.Error(err, "Failed to create new configmap")
+			return ctrl.Result{}, err
+		}
+	}
+
+	ctrllog.Info("Creating Deployment")
+	err = r.Create(ctx, deployment)
+
+	if err != nil {
+		if apierrors.IsBadRequest(err) {
+			ctrllog.Error(err, "Failed to create new deployment")
+			return ctrl.Result{}, err
+		}
+	}
+
+	ctrllog.Info("Creating Service")
+	err = r.Create(ctx, service)
+	if err != nil {
+		if apierrors.IsBadRequest(err) {
+			ctrllog.Error(err, "Failed to create new service")
+			return ctrl.Result{}, err
+		}
+		ctrllog.Error(err, "Failed to create new service")
+	}
+
+	return ctrl.Result{Requeue: true}, nil
+
 }
 
 //+kubebuilder:rbac:groups=ml.kalkyai.com,resources=models,verbs=get;list;watch;create;update;patch;delete
@@ -54,8 +116,41 @@ type ModelReconciler struct {
 func (r *ModelReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	ctrllog := log.FromContext(ctx).WithValues("models", req.NamespacedName)
 
-	// TODO(user): your logic here
-	ctrllog.Info("test")
+	ctrllog.Info("Initializing Reconcile")
+	model_serving := &mlv1alpha1.Model{}
+	err := r.Get(ctx, req.NamespacedName, model_serving)
+
+	ctrllog.Info(fmt.Sprintf("%s", err))
+
+	if err != nil {
+		if apierrors.IsNotFound(err) {
+			ctrllog.Error(err, "Model not found")
+			return ctrl.Result{}, nil
+		}
+		ctrllog.Info("Model found")
+		return ctrl.Result{}, err
+	}
+
+	ctrllog.Info("Model Found")
+
+	// See if the statefulset exists
+	statefulset := &appsv1.StatefulSet{}
+	err = r.Get(ctx, types.NamespacedName{
+		Namespace: model_serving.Namespace,
+		Name:      model_serving.Name,
+	}, statefulset)
+
+	if err != nil {
+		// create new resource if not found
+		if apierrors.IsNotFound(err) {
+			ctrllog.Info("Error --- statefulset not found create a new one")
+			return r.reconcileCreate(ctx, req)
+		}
+		ctrllog.Info("Model found")
+		return ctrl.Result{}, err
+	}
+
+	// Handle if not already exists
 
 	return ctrl.Result{}, nil
 }
