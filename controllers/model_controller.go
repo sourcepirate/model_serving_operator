@@ -52,6 +52,7 @@ func (r *ModelReconciler) reconcileCreate(ctx context.Context, req ctrl.Request)
 		ModelURL:  model_serving.Spec.Location,
 		Columns:   model_serving.Spec.Columns,
 		Namespace: model_serving.Namespace,
+		Version:   model_serving.Spec.Version,
 	}
 
 	config := mod.CreateConfigMap(ctx, model_serving.Spec.Location, model_serving.Spec.Columns)

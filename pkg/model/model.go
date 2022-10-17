@@ -16,6 +16,7 @@ type ModelServing struct {
 	ModelURL  string
 	Columns   string
 	Namespace string
+	Version   string
 	Replicas  int32
 }
 
@@ -46,7 +47,7 @@ func (m *ModelServing) CreateDeployment(ctx context.Context) *appsv1.StatefulSet
 				ObjectMeta: metav1.ObjectMeta{Labels: labels},
 				Spec: corev1.PodSpec{
 					Containers: []corev1.Container{{
-						Image: "plasmashadow/model_serving:latest",
+						Image: fmt.Sprint("plasmashadow/model_serving:", m.Version),
 						Name:  "serving",
 						Ports: []corev1.ContainerPort{{ContainerPort: 4000, Name: "serving"}},
 						Env: []corev1.EnvVar{{
