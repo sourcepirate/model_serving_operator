@@ -36,6 +36,7 @@ type ModelSpec struct {
 	Endpoint  string `json:"endpoint"`
 	Columns   string `json:"columns"`
 	Version   string `json:"version"`
+	Bucket    string `json:"bucket"`
 }
 
 // ModelStatus defines the observed state of Model

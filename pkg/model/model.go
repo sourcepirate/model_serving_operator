@@ -21,6 +21,7 @@ type ModelServing struct {
 	AccessKey string
 	SecretKey string
 	Endpoint  string
+	Bucket    string
 }
 
 func (m *ModelServing) CreateService(ctx context.Context) *corev1.Service {
@@ -105,6 +106,17 @@ func (m *ModelServing) CreateDeployment(ctx context.Context) *appsv1.StatefulSet
 									},
 								},
 							},
+							{
+								Name: "BUCKET",
+								ValueFrom: &v1.EnvVarSource{
+									ConfigMapKeyRef: &v1.ConfigMapKeySelector{
+										LocalObjectReference: corev1.LocalObjectReference{
+											Name: fmt.Sprint("cf-", m.Name),
+										},
+										Key: "bucket",
+									},
+								},
+							},
 						},
 						VolumeMounts: []corev1.VolumeMount{{Name: fmt.Sprint("vol-", m.Name), MountPath: "/data"}}}},
 					Volumes: []corev1.Volume{{
@@ -126,7 +138,7 @@ func (m *ModelServing) CreateDeployment(ctx context.Context) *appsv1.StatefulSet
 	return found
 }
 
-func (m *ModelServing) CreateConfigMap(ctx context.Context, modelPath string, columns string, accessKey string, secretKey string, endpoint string) *corev1.ConfigMap {
+func (m *ModelServing) CreateConfigMap(ctx context.Context, modelPath string, columns string, accessKey string, secretKey string, endpoint string, bucket string) *corev1.ConfigMap {
 
 	found := &corev1.ConfigMap{
 		TypeMeta:   metav1.TypeMeta{},
@@ -138,6 +150,7 @@ func (m *ModelServing) CreateConfigMap(ctx context.Context, modelPath string, co
 			"access_key": accessKey,
 			"secret_key": secretKey,
 			"endpoint":   endpoint,
+			"bucket":     bucket,
 		},
 		BinaryData: map[string][]byte{},
 	}

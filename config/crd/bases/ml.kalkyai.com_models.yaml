@@ -37,6 +37,8 @@ spec:
             properties:
               access_key:
                 type: string
+              bucket:
+                type: string
               columns:
                 type: string
               endpoint:
@@ -54,6 +56,7 @@ spec:
                 type: string
             required:
             - access_key
+            - bucket
             - columns
             - endpoint
             - location
