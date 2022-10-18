@@ -53,9 +53,18 @@ func (r *ModelReconciler) reconcileCreate(ctx context.Context, req ctrl.Request)
 		Columns:   model_serving.Spec.Columns,
 		Namespace: model_serving.Namespace,
 		Version:   model_serving.Spec.Version,
+		AccessKey: model_serving.Spec.Accesskey,
+		SecretKey: model_serving.Spec.SecretKey,
+		Endpoint:  model_serving.Spec.Endpoint,
 	}
 
-	config := mod.CreateConfigMap(ctx, model_serving.Spec.Location, model_serving.Spec.Columns)
+	config := mod.CreateConfigMap(ctx,
+		model_serving.Spec.Location,
+		model_serving.Spec.Columns,
+		model_serving.Spec.Accesskey,
+		model_serving.Spec.SecretKey,
+		model_serving.Spec.Endpoint,
+	)
 	deployment := mod.CreateDeployment(ctx)
 	service := mod.CreateService(ctx)
 

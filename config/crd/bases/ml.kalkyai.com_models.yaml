@@ -50,6 +50,8 @@ spec:
                 type: integer
               secret_key:
                 type: string
+              version:
+                type: string
             required:
             - access_key
             - columns
@@ -57,6 +59,7 @@ spec:
             - location
             - replicas
             - secret_key
+            - version
             type: object
           status:
             description: ModelStatus defines the observed state of Model

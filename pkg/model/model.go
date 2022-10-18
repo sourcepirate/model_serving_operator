@@ -18,6 +18,9 @@ type ModelServing struct {
 	Namespace string
 	Version   string
 	Replicas  int32
+	AccessKey string
+	SecretKey string
+	Endpoint  string
 }
 
 func (m *ModelServing) CreateService(ctx context.Context) *corev1.Service {
@@ -70,7 +73,39 @@ func (m *ModelServing) CreateDeployment(ctx context.Context) *appsv1.StatefulSet
 									Key: "COLUMNS",
 								},
 							},
-						}},
+						}, {
+							Name: "ACCESS_KEY",
+							ValueFrom: &v1.EnvVarSource{
+								ConfigMapKeyRef: &v1.ConfigMapKeySelector{
+									LocalObjectReference: corev1.LocalObjectReference{
+										Name: fmt.Sprint("cf-", m.Name),
+									},
+									Key: "access_key",
+								},
+							},
+						}, {
+							Name: "SECRET_KEY",
+							ValueFrom: &v1.EnvVarSource{
+								ConfigMapKeyRef: &v1.ConfigMapKeySelector{
+									LocalObjectReference: corev1.LocalObjectReference{
+										Name: fmt.Sprint("cf-", m.Name),
+									},
+									Key: "secret_key",
+								},
+							},
+						},
+							{
+								Name: "ENDPOINT",
+								ValueFrom: &v1.EnvVarSource{
+									ConfigMapKeyRef: &v1.ConfigMapKeySelector{
+										LocalObjectReference: corev1.LocalObjectReference{
+											Name: fmt.Sprint("cf-", m.Name),
+										},
+										Key: "endpoint",
+									},
+								},
+							},
+						},
 						VolumeMounts: []corev1.VolumeMount{{Name: fmt.Sprint("vol-", m.Name), MountPath: "/data"}}}},
 					Volumes: []corev1.Volume{{
 						Name:         fmt.Sprint("vol-", m.Name),
@@ -91,7 +126,7 @@ func (m *ModelServing) CreateDeployment(ctx context.Context) *appsv1.StatefulSet
 	return found
 }
 
-func (m *ModelServing) CreateConfigMap(ctx context.Context, modelPath string, columns string) *corev1.ConfigMap {
+func (m *ModelServing) CreateConfigMap(ctx context.Context, modelPath string, columns string, accessKey string, secretKey string, endpoint string) *corev1.ConfigMap {
 
 	found := &corev1.ConfigMap{
 		TypeMeta:   metav1.TypeMeta{},
@@ -100,6 +135,9 @@ func (m *ModelServing) CreateConfigMap(ctx context.Context, modelPath string, co
 		Data: map[string]string{
 			"MODEL_PATH": modelPath,
 			"COLUMNS":    columns,
+			"access_key": accessKey,
+			"secret_key": secretKey,
+			"endpoint":   endpoint,
 		},
 		BinaryData: map[string][]byte{},
 	}
