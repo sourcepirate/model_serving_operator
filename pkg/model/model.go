@@ -40,7 +40,7 @@ func (m *ModelServing) CreateService(ctx context.Context) *corev1.Service {
 	return service
 }
 
-func (m *ModelServing) CreateDeployment(ctx context.Context) *appsv1.StatefulSet {
+func (m *ModelServing) CreateDeployment(ctx context.Context, volume *corev1.PersistentVolumeClaim) *appsv1.StatefulSet {
 
 	labels := map[string]string{"serving": m.Name}
 
@@ -68,7 +68,7 @@ func (m *ModelServing) CreateDeployment(ctx context.Context) *appsv1.StatefulSet
 								},
 							},
 						}, {
-							Name: "COLUMNS",
+							Name: "DATA_COLUMNS",
 							ValueFrom: &v1.EnvVarSource{
 								ConfigMapKeyRef: &v1.ConfigMapKeySelector{
 									LocalObjectReference: corev1.LocalObjectReference{
@@ -121,37 +121,36 @@ func (m *ModelServing) CreateDeployment(ctx context.Context) *appsv1.StatefulSet
 								},
 							},
 						},
-						VolumeMounts: []corev1.VolumeMount{{Name: fmt.Sprint("vol-", m.Name), MountPath: "/data"}}}},
-					Volumes: []corev1.Volume{{
-						Name:         fmt.Sprint("vol-", m.Name),
-						VolumeSource: corev1.VolumeSource{},
-					}},
+						VolumeMounts: []corev1.VolumeMount{{Name: fmt.Sprint("pvc-", m.Name), MountPath: "/data"}}}},
 				}},
-			VolumeClaimTemplates: []corev1.PersistentVolumeClaim{{
-				ObjectMeta: metav1.ObjectMeta{Name: fmt.Sprint("pvc-", m.Name)},
-				Spec: corev1.PersistentVolumeClaimSpec{
-					AccessModes: []corev1.PersistentVolumeAccessMode{corev1.ReadWriteMany},
-					Resources: corev1.ResourceRequirements{
-						Requests: map[v1.ResourceName]resource.Quantity{
-							corev1.ResourceStorage: resource.Quantity{
-								Format: "5Gi",
-							},
-						},
-					},
-					StorageClassName: &storageClassName,
-				},
-			}},
-			ServiceName:                          fmt.Sprint("ms-", m.Name),
-			PodManagementPolicy:                  "",
-			UpdateStrategy:                       appsv1.StatefulSetUpdateStrategy{},
-			RevisionHistoryLimit:                 new(int32),
-			MinReadySeconds:                      0,
-			PersistentVolumeClaimRetentionPolicy: &appsv1.StatefulSetPersistentVolumeClaimRetentionPolicy{},
+			VolumeClaimTemplates: []corev1.PersistentVolumeClaim{*volume},
+			ServiceName:          fmt.Sprint("ms-", m.Name),
+			PodManagementPolicy:  "",
+			UpdateStrategy:       appsv1.StatefulSetUpdateStrategy{},
+			RevisionHistoryLimit: new(int32),
+			MinReadySeconds:      0,
+			PersistentVolumeClaimRetentionPolicy: &appsv1.StatefulSetPersistentVolumeClaimRetentionPolicy{
+				WhenDeleted: "Delete",
+			},
 		},
 		Status: appsv1.StatefulSetStatus{},
 	}
 
 	return found
+}
+
+func (m *ModelServing) CreateVolume(ctx context.Context) *corev1.PersistentVolumeClaim {
+	return &corev1.PersistentVolumeClaim{
+		ObjectMeta: metav1.ObjectMeta{Name: fmt.Sprint("pvc-", m.Name)},
+		Spec: corev1.PersistentVolumeClaimSpec{
+			AccessModes: []corev1.PersistentVolumeAccessMode{corev1.ReadWriteOnce},
+			Resources: corev1.ResourceRequirements{
+				Limits:   map[v1.ResourceName]resource.Quantity{},
+				Requests: map[v1.ResourceName]resource.Quantity{"storage": resource.MustParse("5Gi")},
+			},
+			StorageClassName: &storageClassName,
+		},
+	}
 }
 
 func (m *ModelServing) CreateConfigMap(ctx context.Context, modelPath string, columns string, accessKey string, secretKey string, endpoint string, bucket string) *corev1.ConfigMap {

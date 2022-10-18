@@ -67,9 +67,13 @@ func (r *ModelReconciler) reconcileCreate(ctx context.Context, req ctrl.Request)
 		model_serving.Spec.Endpoint,
 		model_serving.Spec.Bucket,
 	)
-	deployment := mod.CreateDeployment(ctx)
+
+	ctrllog.Info("Creating new volume")
+	volume := mod.CreateVolume(ctx)
+	deployment := mod.CreateDeployment(ctx, volume)
 	service := mod.CreateService(ctx)
 
+	ctrl.SetControllerReference(model_serving, volume, r.Scheme)
 	ctrl.SetControllerReference(model_serving, deployment, r.Scheme)
 	ctrl.SetControllerReference(model_serving, service, r.Scheme)
 	ctrl.SetControllerReference(model_serving, config, r.Scheme)
