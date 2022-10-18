@@ -7,9 +7,12 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	utils "k8s.io/apimachinery/pkg/util/intstr"
 )
+
+var storageClassName string = "do-block-storage"
 
 type ModelServing struct {
 	Name      string
@@ -124,7 +127,20 @@ func (m *ModelServing) CreateDeployment(ctx context.Context) *appsv1.StatefulSet
 						VolumeSource: corev1.VolumeSource{},
 					}},
 				}},
-			VolumeClaimTemplates:                 []corev1.PersistentVolumeClaim{},
+			VolumeClaimTemplates: []corev1.PersistentVolumeClaim{{
+				ObjectMeta: metav1.ObjectMeta{Name: fmt.Sprint("pvc-", m.Name)},
+				Spec: corev1.PersistentVolumeClaimSpec{
+					AccessModes: []corev1.PersistentVolumeAccessMode{corev1.ReadWriteMany},
+					Resources: corev1.ResourceRequirements{
+						Requests: map[v1.ResourceName]resource.Quantity{
+							corev1.ResourceStorage: resource.Quantity{
+								Format: "5Gi",
+							},
+						},
+					},
+					StorageClassName: &storageClassName,
+				},
+			}},
 			ServiceName:                          fmt.Sprint("ms-", m.Name),
 			PodManagementPolicy:                  "",
 			UpdateStrategy:                       appsv1.StatefulSetUpdateStrategy{},
