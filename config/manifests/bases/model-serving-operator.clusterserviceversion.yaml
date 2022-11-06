@@ -1,0 +1,46 @@
+apiVersion: operators.coreos.com/v1alpha1
+kind: ClusterServiceVersion
+metadata:
+  annotations:
+    alm-examples: '[]'
+    capabilities: Basic Install
+  name: model-serving-operator.v0.0.0
+  namespace: placeholder
+spec:
+  apiservicedefinitions: {}
+  customresourcedefinitions:
+    owned:
+    - description: Model is the Schema for the models API
+      displayName: Model
+      kind: Model
+      name: models.ml.kalkyai.com
+      version: v1alpha1
+  description: operator to serve sklearn models
+  displayName: model_serving_operator
+  icon:
+  - base64data: ""
+    mediatype: ""
+  install:
+    spec:
+      deployments: null
+    strategy: ""
+  installModes:
+  - supported: false
+    type: OwnNamespace
+  - supported: false
+    type: SingleNamespace
+  - supported: false
+    type: MultiNamespace
+  - supported: true
+    type: AllNamespaces
+  keywords:
+  - models
+  - sklearn
+  links:
+  - name: Model Serving Operator
+    url: https://model-serving-operator.domain
+  maturity: alpha
+  provider:
+    name: kalkyai
+    url: kalkyai.com
+  version: 0.0.0
