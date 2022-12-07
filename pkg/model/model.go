@@ -54,9 +54,10 @@ func (m *ModelServing) CreateDeployment(ctx context.Context, volume *corev1.Pers
 				ObjectMeta: metav1.ObjectMeta{Labels: labels},
 				Spec: corev1.PodSpec{
 					Containers: []corev1.Container{{
-						Image: fmt.Sprint("plasmashadow/model_serving:", m.Version),
-						Name:  "serving",
-						Ports: []corev1.ContainerPort{{ContainerPort: 4000, Name: "serving"}},
+						Image:           fmt.Sprint("plasmashadow/model_serving:", m.Version),
+						ImagePullPolicy: "Always",
+						Name:            "serving",
+						Ports:           []corev1.ContainerPort{{ContainerPort: 4000, Name: "serving"}},
 						Env: []corev1.EnvVar{{
 							Name: "MODEL_PATH",
 							ValueFrom: &v1.EnvVarSource{
