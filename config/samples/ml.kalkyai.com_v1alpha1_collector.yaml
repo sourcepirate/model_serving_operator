@@ -1,0 +1,6 @@
+apiVersion: ml.kalkyai.com.kalkyai.com/v1alpha1
+kind: Collector
+metadata:
+  name: collector-sample
+spec:
+  # TODO(user): Add fields here
