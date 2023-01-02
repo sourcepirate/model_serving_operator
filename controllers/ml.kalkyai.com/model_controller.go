@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package controllers
+package mlkalkyaicom
 
 import (
 	"context"
@@ -26,7 +26,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
-	mlv1alpha1 "github.com/kalkyai/model-serving-operator/api/v1alpha1"
+	mlv1alpha1 "github.com/kalkyai/model-serving-operator/apis/ml.kalkyai.com/v1alpha1"
 	model "github.com/kalkyai/model-serving-operator/pkg/model"
 	appsv1 "k8s.io/api/apps/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"

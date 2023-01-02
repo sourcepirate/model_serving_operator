@@ -1,6 +1,7 @@
 domain: kalkyai.com
 layout:
 - go.kubebuilder.io/v3
+multigroup: true
 plugins:
   manifests.sdk.operatorframework.io/v2: {}
   scorecard.sdk.operatorframework.io/v2: {}
@@ -15,5 +16,14 @@ resources:
   group: ml
   kind: Model
   path: github.com/kalkyai/model-serving-operator/api/v1alpha1
+  version: v1alpha1
+- api:
+    crdVersion: v1
+    namespaced: true
+  controller: true
+  domain: kalkyai.com
+  group: ml.kalkyai.com
+  kind: Collector
+  path: github.com/kalkyai/model-serving-operator/apis/ml.kalkyai.com/v1alpha1
   version: v1alpha1
 version: "3"
